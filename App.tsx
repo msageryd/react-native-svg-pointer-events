@@ -1,131 +1,93 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {View, Alert, Text, PanResponder, StyleSheet} from 'react-native';
+import Svg, {Circle} from 'react-native-svg';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const UnderlyingInteractiveElement = () => {
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => Alert.alert('Underlying Element Touched!'),
+      // Add some move handlers to visually confirm panning if desired
+      onPanResponderMove: (_, gestureState) => {
+        console.log(
+          `Underlying move: dx=${gestureState.dx}, dy=${gestureState.dy}`,
+        );
+      },
+    }),
+  ).current;
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View {...panResponder.panHandlers} style={styles.underlyingElement}>
+      <Text>Underlaying area (Try to Pan/Touch)</Text>
     </View>
   );
-}
+};
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the recommendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+const OverlaySvg = () => {
+  const svgSize = 200;
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <View
+      style={[
+        styles.overlayContainer,
+        {
+          width: svgSize,
+          height: svgSize,
+          left: 50,
+          top: 50,
+        },
+      ]}>
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${svgSize} ${svgSize}`}
+        pointerEvents="none" // Expect SVG canvas to be non-interactive AND allow pass-through
+      >
+        {/* A purely visual, non-interactive circle */}
+        <Circle
+          cx={svgSize / 2}
+          cy={svgSize / 2}
+          r={40}
+          fill="orange"
+          // No onPress handler
+          // No pointerEvents="auto" or any pointerEvents prop
+        />
+      </Svg>
+    </View>
+  );
+};
+
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <UnderlyingInteractiveElement />
+      <OverlaySvg />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  underlyingElement: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'lightblue',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1, // Ensure it's "underneath"
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  overlayContainer: {
+    position: 'absolute',
+    // Visual debugging for the overlay container's bounds:
+    borderColor: 'red',
+    borderWidth: 1,
+    pointerEvents: 'box-none', // Crucial: Expect pass-through for empty areas of this View
+    // pointerEvents: 'none',   //"none" makes the view pass-through touches to underlying elements
+    zIndex: 2, // Ensure it's "on top"
   },
 });
-
-export default App;
